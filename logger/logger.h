@@ -5,14 +5,15 @@
 #include <stdbool.h>
 #include <time.h>
 
+/* this holds all the context necessary to generate a log line */
 typedef struct {
-    va_list ap;
-    const char *fmt;
-    const char *file;
-    struct tm *time;
-    void *udata;
-    int line;
-    int level;
+    va_list     arg_list;  /* this is the args list, used to capture a variable number of additional args in your logline */
+    const char  *fmt;      /* the basic log string, such as "hello %s" */
+    const char  *file;     /* the file the logline came from */
+    struct tm   *time;     /* the time the logline was generated */
+    void        *udata;    /* output stream, either stderr or file, depending on which log function you use */
+    int         line;      /* line number of the logline in the c file */
+    int         level;     /* the log severity level of the logline itself, not the system level */
 } log_event_t;
 
 /**
@@ -37,14 +38,14 @@ typedef struct {
  *
  *
  * The reason we have to wrap (*log_LogFn) in parenthesis is so the compiler knows
- * that we're talking about a type that is a function pointer to a function that takes a log_event_t* param and returns void
+ * that we're talking about a type that is a function pointer, which points to function that takes a log_event_t* param and returns void
  *
  * if we instead wrote typedef void *log_LogFn(log_event_t *ev), it would be interpreted as a function that takes a
- * log_event_t* parameter and returns a void*
+ * log_event_t* parameter and returns a void*.  this is because the star* binds to whatever is left of it
  */
 typedef void (*log_LogFn)(log_event_t *ev);
 
-
+/* log severity levels */
 enum {
     LOG_TRACE,
     LOG_DEBUG,
@@ -54,14 +55,15 @@ enum {
     LOG_FATAL
 };
 
+/* return codes */
 enum {
     EXIT_SUCCESS,
     EXIT_FAILURE,
-    EXIT_WHAT_IN_THE_GOT_DAMN_FUCK
+    FILE_OPEN_FAILURE
 };
 
 
-/** Top-level Macros that can be used in our calling code (see logger_test.c)
+/** These are the main macros that we use to write loglines
  *
  * They invoke our main logging function `log_log` and pass
  * SEVERITY: (LOG_TRACE, LOG_DEBUG etc)
@@ -80,7 +82,6 @@ enum {
  * log_debug("hello from the underworld %s", x);  will expand at preprocessing to -->
  * log_log(LOG_DEBUG, "logger_test.c", 12, "hello from the underworld %s", x);
  */
-
 #define log_trace(...) log_log(LOG_TRACE, __FILE__, __LINE__, __VA_ARGS__)
 #define log_debug(...) log_log(LOG_DEBUG, __FILE__, __LINE__, __VA_ARGS__)
 #define log_info(...)  log_log(LOG_INFO,  __FILE__, __LINE__, __VA_ARGS__)
@@ -88,7 +89,7 @@ enum {
 #define log_error(...) log_log(LOG_ERROR, __FILE__, __LINE__, __VA_ARGS__)
 #define log_fatal(...) log_log(LOG_FATAL, __FILE__, __LINE__, __VA_ARGS__)
 
-
+/* function declarations, all of our function definitions live in the logger.c file */
 const char* log_level_string(int level);
 void log_set_level(int level);
 void log_set_quiet(bool enable);
