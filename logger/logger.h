@@ -5,6 +5,8 @@
 #include <stdbool.h>
 #include <time.h>
 
+#define OPT_DONE -1
+
 /* this holds all the context necessary to generate a log line */
 typedef struct {
     va_list     arg_list;  /* this is the args list, used to capture a variable number of additional args in your logline */
@@ -93,7 +95,7 @@ enum {
 const char* log_level_string(int level);
 void log_set_level(int level);
 void log_set_quiet(bool enable);
-int log_add_(log_LogFn fn, void *udata, int level);
+int log_add_destination(log_LogFn fn, void *udata, int level);
 int log_add_fp(FILE *fp, int level);
 
 void log_log(int level, const char *file, int line, const char *fmt, ...);

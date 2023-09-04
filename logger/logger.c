@@ -9,12 +9,14 @@ typedef struct {
     int level;
 } log_dest_t;
 
-/* GLOBAL LOG CONFIG: static- so cannot be instantiated, can always be modified via the variable `log_global_cfg` */
+/* GLOBAL LOG CONFIG: static - meaning it's always there as a var named log_global_cfg, can modify it at any time */
 static struct {
     log_dest_t destinations[MAX_LOG_DESTINATIONS];
     void *udata;
     int level;
     bool quiet;
+    bool level_cli_override;  // if true, log_set_level will fail, if false, log_set_level will succeed 
+    bool quiet_cli_override;
 } log_global_cfg;
 
 static const char *level_strings[] = {
@@ -26,13 +28,13 @@ static const char *level_strings[] = {
         "FATAL"
 };
 
-/* default stdout logger that's always enabled right now */
-static void log_to_stdout(log_event_t *ev) {
+/* default logging function */
+static void log_to_stream(log_event_t *ev) {
     /* will hold our time string */
-    char time_buf[16];
+    char time_buf[64];
 
     /* strftime fills buff with current time in the format of our choosing and returns a length */
-    size_t chars_written = strftime(time_buf, sizeof(time_buf), "%H:%M:%S", ev->time);
+    size_t chars_written = strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S", ev->time);
 
     /* use the returned length from strftime to place the null terminator */
     time_buf[chars_written] = '\0';
@@ -61,32 +63,19 @@ static void log_to_stdout(log_event_t *ev) {
 
 }
 
-/* basically identical to the above, can skip */
-//# TODO refactor this. no reason to have all the duplicate code with the above, it works very similarly
-static void log_to_file(log_event_t *ev) {
-    char buf[64];
-    buf[strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", ev->time)] = '\0';
-    fprintf(
-            ev->udata, "%s %-5s %s:%d: ",
-            buf, level_strings[ev->level], ev->file, ev->line);
-    vfprintf(ev->udata, ev->fmt, ev->arg_list);
-    fprintf(ev->udata, "\n");
-    fflush(ev->udata);
-}
-
-
-const char* log_level_string(int level) {
-    return level_strings[level];
-}
-
-/*our global cfg mutators that can be used in calling code to modify level or set quiet mode*/
-//TODO JF set_level and set_quiet are good candidates for cli flags
+//so we're here, and we want to set log level to 0
 void log_set_level(int level) {
-    log_global_cfg.level = level;
+
+    //this is the key check that determines whether or not our level set works
+    //since we change it permanently to true in the getopt when option is 'l'
+    //it will never succeed in changing level again if you pass in level via getopt
+    if (log_global_cfg.level_cli_override == false) { 
+        log_global_cfg.level = level; 
+    } 
 }
 
 void log_set_quiet(bool enable) {
-    log_global_cfg.quiet = enable;
+    if (log_global_cfg.quiet_cli_override == false) { log_global_cfg.quiet = enable; } 
 }
 
 /* this is where we register our logging function */
@@ -97,12 +86,12 @@ int log_add_destination(log_LogFn fn, void *udata, int level) {
             return 0;
         }
     }
-    return -1;
+    return -1; // 
 }
 
-/* register a file as the logging destination, notice how the first arg we pass is a log_to_file function ptr */
+/* register a file as the logging destination, notice how the first arg we pass is a log_to_stream function ptr */
 int log_add_fp(FILE *fp, int level) {
-    return log_add_destination(log_to_file, fp, level);
+    return log_add_destination(log_to_stream, fp, level);
 }
 
 /* populate our log event struct with time and output stream data */
@@ -116,6 +105,7 @@ static void init_event(log_event_t *ev, void *udata) {
 
 /**
  * Top-level logging function invoked by our logging macros
+ * When you call log_debug(...), log_info(...) etc, this is what does the work
  *
  * @param level: request handle
  * @param file: populated by the macro with __FILE__, the current file
@@ -124,6 +114,8 @@ static void init_event(log_event_t *ev, void *udata) {
  * @return void
  */
 void log_log(int level, const char *file, int line, const char *fmt, ...) {
+
+    /* initialize logging data, we will pass this to log_to_stream once populated */
     log_event_t ev = {
             .fmt   = fmt,
             .file  = file,
@@ -132,21 +124,21 @@ void log_log(int level, const char *file, int line, const char *fmt, ...) {
     };
 
     if (!log_global_cfg.quiet && level >= log_global_cfg.level) {
+        
         /* finishes populating ev with time and output stream (udata) */
         init_event(&ev, stderr);
 
-        /* ev.arg_list is uninitialized and needs to be populatd with a variable amount of args
-         * the va_start function takes the variadic list (ev.arg_list in our code), and the final named argument
-         * in the function declaration.  (notice in log_log() signature above, fmt is the last named parameter before the ...)
-         * va_start then knows "everything after const char *fmt (the ...) is an arg, so it can take those args
-         * and populate (ev.arg_list), our arg list */
+        /* sets up the arg list with all of our extra args if any */
         va_start(ev.arg_list, fmt);
-        /* now that the struct (ev) has all relevant log info, pass to our concrete std logger function */
-        log_to_stdout(&ev);
+        
+        /* HERE'S WHERE LOGGING WORK HAPPENS AND STUFF ACTUALLY GETS PRINTED */
+        log_to_stream(&ev);
+        
         va_end(ev.arg_list);
     }
 
-    /* iterate through all the destinations/callbacks and emit the logline there */
+    /* you can ignore this for now. 
+    *  we iterate through all the registered destinations and call their functions */
     for (int i = 0; i < MAX_LOG_DESTINATIONS && log_global_cfg.destinations[i].fn; i++) {
         log_dest_t *log_dest = &log_global_cfg.destinations[i];
         if (level >= log_dest->level) {
