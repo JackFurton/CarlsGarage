@@ -1,0 +1,44 @@
+#include <stdio.h>
+#include "logger.c"
+#include <unistd.h>
+#include <stdlib.h>
+#include <getopt.h>
+#include "throttled.h" 
+
+struct option long_options[] = {
+    {"level",     required_argument, 0,   'l' },
+    {"quiet",     no_argument,       0,   'q' },
+    {0,           0,                 0,    0  }
+};
+
+int main(int argc, char *argv[]) {
+    int opt;
+    int long_index = 0;
+    while ((opt = getopt_long(argc, argv, "l:q", long_options, &long_index)) != OPT_DONE) {
+
+        switch (opt) {
+        case 'l':  // set log-level case
+            if (atoi(optarg) >= 0 && atoi(optarg) <= 5) {
+
+                log_set_level(atoi(optarg));
+                log_global_cfg.level_cli_override = true;
+                log_info("logging level overridden, logging level set to: %d\n", atoi(optarg));
+            } else {
+                log_error("TedP Glares: Invalid log level %s\n", optarg);
+                return EXIT_FAILURE;
+            }
+            break;
+
+        case 'q':
+            log_set_quiet(true);
+            log_global_cfg.quiet_cli_override = true;
+            log_info("quiet mode override, logs squelched\n");
+            break;
+
+        default:
+            break;
+        }
+    }
+
+    log_info("Hello world");
+}
