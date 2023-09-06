@@ -54,7 +54,8 @@ enum {
     LOG_INFO,
     LOG_WARN,
     LOG_ERROR,
-    LOG_FATAL
+    LOG_FATAL,
+    LOG_OFF
 };
 
 /* return codes */
@@ -90,6 +91,7 @@ enum {
 #define log_warn(...)  log_log(LOG_WARN,  __FILE__, __LINE__, __VA_ARGS__)
 #define log_error(...) log_log(LOG_ERROR, __FILE__, __LINE__, __VA_ARGS__)
 #define log_fatal(...) log_log(LOG_FATAL, __FILE__, __LINE__, __VA_ARGS__)
+#define log_off(...) log_log(LOG_OFF, __FILE__, __LINE__, __VA_ARGS__)
 
 /* function declarations, all of our function definitions live in the logger.c file */
 const char* log_level_string(int level);

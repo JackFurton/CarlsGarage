@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <getopt.h>
 #include "throttled.h" 
+#include <string.h>
 
 struct option long_options[] = {
     {"level",     required_argument, 0,   'l' },
@@ -18,27 +19,25 @@ int main(int argc, char *argv[]) {
 
         switch (opt) {
         case 'l':  // set log-level case
-            if (atoi(optarg) >= 0 && atoi(optarg) <= 5) {
-
-                log_set_level(atoi(optarg));
-                log_global_cfg.level_cli_override = true;
-                log_info("logging level overridden, logging level set to: %d\n", atoi(optarg));
+            if (strcmp(optarg, "debug") == 0) {
+                log_set_level(LOG_DEBUG);
+            } else if (strcmp(optarg, "info") == 0) {
+                log_set_level(LOG_INFO);
+            } else if (strcmp(optarg, "warn") == 0) {
+                log_set_level(LOG_WARN);
+            } else if (strcmp(optarg, "error") == 0) {
+                log_set_level(LOG_ERROR);
+            } else if (strcmp(optarg, "fatal") == 0) {
+                log_set_level(LOG_FATAL);
+            } else if (strcmp(optarg, "off") == 0) {
+                log_set_level(LOG_OFF);
             } else {
                 log_error("TedP Glares: Invalid log level %s\n", optarg);
                 return EXIT_FAILURE;
             }
+            log_global_cfg.level_cli_override = true;
+            log_info("logging level overriden, logging level set to: %s\n, optarg");
             break;
-
-        case 'q':
-            log_set_quiet(true);
-            log_global_cfg.quiet_cli_override = true;
-            log_info("quiet mode override, logs squelched\n");
-            break;
-
-        default:
-            break;
+            }
         }
-    }
-
-    log_info("Hello world");
-}
+    }  
