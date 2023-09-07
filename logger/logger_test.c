@@ -29,15 +29,19 @@ int main(int argc, char *argv[]) {
                 log_set_level(LOG_ERROR);
             } else if (strcmp(optarg, "fatal") == 0) {
                 log_set_level(LOG_FATAL);
-            } else if (strcmp(optarg, "off") == 0) {
-                log_set_level(LOG_OFF);
             } else {
                 log_error("TedP Glares: Invalid log level %s\n", optarg);
                 return EXIT_FAILURE;
             }
-            log_global_cfg.level_cli_override = true;
-            log_info("logging level overriden, logging level set to: %s\n, optarg");
             break;
+
+        case 'q':
+            log_info("quiet mode override, logs squelched\n");
+            log_set_quiet(true);
+            log_global_cfg.quiet_cli_override = true;
+            break;
+
             }
         }
-    }  
+    log_info("shr1k");
+}  
