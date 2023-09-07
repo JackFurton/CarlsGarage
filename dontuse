@@ -1,0 +1,38 @@
+CC = gcc
+CXX = g++
+CFLAGS = -c 
+CXXFLAGS = -c
+BOOST_FLAGS = -lboost_unit_test_framework
+SRC_DIR = src/
+TEST_DIR = tests/
+LOGGER_DIR = $(SRC_DIR)logger/
+BUILD_DIR = build/
+LDFLAGS =
+LIBS = -lboost_unit_test_framework
+INCLUDES = -I./src -I./src/logger
+
+all: test_logger log_main
+
+#compile logger C functionality with master cpp test suite
+test_logger: logger.o test_logger.o
+	$(CXX) $(LDFLAGS) logger.o test_logger.o $(LIBS) -o test_logger
+
+#compile logger and log_main
+log_main: logger.o log_main.o
+	$(CXX) $(LDFLAGS) logger.o log_main.o $(LIBS) -o log_main
+
+#compile logger.c/h
+logger.o: src/logger/logger.c src/logger/logger.h
+	$(CC) $(CFLAGS) $(INCLUDES) src/logger/logger.c 
+
+#compile test_logger.cpp
+test_logger.o: tests/test_logger.cpp src/logger/logger.h
+	$(CC) $(CXXFLAGS) $(INCLUDES) tests/test_logger.cpp 
+
+log_main.o: src/log_main.cpp src/log_main.h src/logger/logger.h
+	$(CXX) $(CXXFLAGS) $(INCLUDES) logger.o log_main.o $(LIBS) -o log_main
+
+
+
+clean: 
+	rm -rf $(BUILD_DIR)

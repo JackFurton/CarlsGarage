@@ -1,3 +1,5 @@
+#pragma once
+
 #include <stdio.h>
 #include "logger.c"
 #include <unistd.h>
@@ -43,5 +45,9 @@ int main(int argc, char *argv[]) {
 
             }
         }
-    log_info("shr1k");
+    FILE *fp = fopen("boost.log", "a");
+    if (fp == NULL) return 1;
+    log_add_fp(fp, LOG_TRACE);
+    log_trace("ye");
+    return 0;
 }  

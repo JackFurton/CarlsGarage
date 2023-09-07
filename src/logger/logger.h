@@ -1,9 +1,8 @@
-#pragma once
-
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <time.h>
+#include <getopt.h>
 
 #define OPT_DONE -1
 
@@ -59,9 +58,9 @@ enum {
 
 /* return codes */
 enum {
-    EXIT_SUCCESS,
-    EXIT_FAILURE,
-    FILE_OPEN_FAILURE
+    LOGGER_EXIT_SUCCESS,
+    LOGGER_EXIT_FAILURE,
+    LOGGER_FILE_OPEN_FAILURE
 };
 
 
@@ -91,11 +90,20 @@ enum {
 #define log_error(...) log_log(LOG_ERROR, __FILE__, __LINE__, __VA_ARGS__)
 #define log_fatal(...) log_log(LOG_FATAL, __FILE__, __LINE__, __VA_ARGS__)
 
-/* function declarations, all of our function definitions live in the logger.c file */
+
+#ifdef __cplusplus
+
+extern "C" {
+#endif
+
 const char* log_level_string(int level);
 void log_set_level(int level);
 void log_set_quiet(bool enable);
 int log_add_destination(log_LogFn fn, void *udata, int level);
 int log_add_fp(FILE *fp, int level);
-
 void log_log(int level, const char *file, int line, const char *fmt, ...);
+int parse_args(int argc, char *argv[]);
+
+#ifdef __cplusplus
+}
+#endif

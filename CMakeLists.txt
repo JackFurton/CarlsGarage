@@ -3,7 +3,7 @@ project(CarlsGarage)
 
 set(CMAKE_CXX_STANDARD 11)
 
-include_directories(src)
+include_directories(src,tests)
 
 add_library(logger src/logger/logger.c)
 

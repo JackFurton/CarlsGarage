@@ -1,3 +1,5 @@
+#pragma once
+
 #include "logger.h"
 
 #define MAX_LOG_DESTINATIONS 420
@@ -13,7 +15,7 @@ typedef struct {
 static struct {
     log_dest_t destinations[MAX_LOG_DESTINATIONS];
     void *udata;
-    int level;
+int level;
     bool quiet;
     bool level_cli_override;  // if true, log_set_level will fail, if false, log_set_level will succeed 
     bool quiet_cli_override;
@@ -45,7 +47,7 @@ static void log_to_stream(log_event_t *ev) {
      * fprintf takes (filestream, format, and then any number of args (...))
      * we're passing: time (from time_buf) | log level | file name | line number
     */
-    fprintf(ev->udata, "%s %-5s %s:%d: ", time_buf, level_strings[ev->level], ev->file, ev->line);
+    fprintf((FILE*)ev->udata, "%s %-5s %s:%d: ", time_buf, level_strings[ev->level], ev->file, ev->line);
 
     /* vfprintf prints the actual log message we're emitting
      * ev->fmt: format string: in log_debug("hello %s", x) it's the "hello %s" portion
@@ -53,13 +55,13 @@ static void log_to_stream(log_event_t *ev) {
      * log_info("bla bla %s, %s", x, y). "bla bla %s %s" is your format string, x and y are args
      * it's perfectly fine to just have a format string without args: log_debug("hello world")
     */
-    vfprintf(ev->udata, ev->fmt, ev->arg_list);
+    vfprintf((FILE*)ev->udata, ev->fmt, ev->arg_list);
 
     /* newline after each logline */
-    fprintf(ev->udata, "\n");
+    fprintf((FILE*)ev->udata, "\n");
 
     /* flush the output buffer to ensure that the log entry is written immediately. */
-    fflush(ev->udata);
+    fflush((FILE*)ev->udata);
 
 }
 
@@ -148,5 +150,43 @@ void log_log(int level, const char *file, int line, const char *fmt, ...) {
             va_end(ev.arg_list);
         }
     }
+}
 
+int parse_args(int argc, char *argv[]) {
+    
+    struct option long_options[] = {
+        {"level",     required_argument, 0,   'l' },
+        {"quiet",     no_argument,       0,   'q' },
+        {0,           0,                 0,    0  }
+    };
+
+    int opt;
+    int long_index = 0;
+    while ((opt = getopt_long(argc, argv, "l:q", long_options, &long_index)) != OPT_DONE) {
+        switch (opt) {
+        case 'l':  // set log-level case
+            if (strcmp(optarg, "debug") == 0) {
+                log_set_level(LOG_DEBUG);
+            } else if (strcmp(optarg, "info") == 0) {
+                log_set_level(LOG_INFO);
+            } else if (strcmp(optarg, "warn") == 0) {
+                log_set_level(LOG_WARN);
+            } else if (strcmp(optarg, "error") == 0) {
+                log_set_level(LOG_ERROR);
+            } else if (strcmp(optarg, "fatal") == 0) {
+                log_set_level(LOG_FATAL);
+            } else {
+                log_error("TedP Glares: Invalid log level %s\n", optarg);
+                continue;
+            }
+            break;
+
+        case 'q':
+            log_info("quiet mode override, logs squelched\n");
+            log_set_quiet(true);
+            log_global_cfg.quiet_cli_override = true;
+            break;
+        }
+    }
+    return LOGGER_EXIT_SUCCESS;
 }
