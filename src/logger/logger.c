@@ -15,7 +15,7 @@ typedef struct {
 static struct {
     log_dest_t destinations[MAX_LOG_DESTINATIONS];
     void *udata;
-int level;
+    int level;
     bool quiet;
     bool level_cli_override;  // if true, log_set_level will fail, if false, log_set_level will succeed 
     bool quiet_cli_override;

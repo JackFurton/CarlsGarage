@@ -18,7 +18,8 @@ BOOST_AUTO_TEST_SUITE(LoggerSuite)
 BOOST_AUTO_TEST_CASE(test_getopt_parse_log_level_debug) 
 {
     char *fake_argv[] = { (char*)"woof", (char*)"-l", (char*)"debug"};
-    parse_args(3, fake_argv);
+    int fake_argc = sizeof(fake_argv) / sizeof(char*);
+    parse_args(fake_argc, fake_argv);
 
     //make sure log level is correctly set in config
     BOOST_CHECK_EQUAL(log_global_cfg.level, LOG_DEBUG);
@@ -29,17 +30,20 @@ BOOST_AUTO_TEST_CASE(test_getopt_parse_log_level_debug)
 BOOST_AUTO_TEST_CASE(test_getopt_parse_log_level_info) 
 {
     char *fake_argv[] = { (char*)"woof", (char*)"-l", (char*)"info"};
-    parse_args(3, fake_argv);
+    int fake_argc = sizeof(fake_argv) / sizeof(char*);
+    parse_args(fake_argc, fake_argv);
+    
 
     BOOST_CHECK_EQUAL(log_global_cfg.level, LOG_INFO);
     BOOST_CHECK_EQUAL(log_global_cfg.level_cli_override, true);
-    
+
 }
 
 BOOST_AUTO_TEST_CASE(test_getopt_parse_log_level_error) 
 {
     char *fake_argv[] = { (char*)"woof", (char*)"-l", (char*)"error"};
-    parse_args(3, fake_argv);
+    int fake_argc = sizeof(fake_argv) / sizeof(char*);
+    parse_args(fake_argc, fake_argv);
 
     BOOST_CHECK_EQUAL(log_global_cfg.level, LOG_ERROR);
     BOOST_CHECK_EQUAL(log_global_cfg.level_cli_override, true);
