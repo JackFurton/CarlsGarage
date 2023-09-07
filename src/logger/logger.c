@@ -1,25 +1,8 @@
-#pragma once
-
 #include "logger.h"
+#include <string.h>
+#include <getopt.h>
 
-#define MAX_LOG_DESTINATIONS 420
-
-/* holds the function pointer for a custom logging function and its level and output stream(udata) */
-typedef struct {
-    log_LogFn fn;
-    void *udata;
-    int level;
-} log_dest_t;
-
-/* GLOBAL LOG CONFIG: static - meaning it's always there as a var named log_global_cfg, can modify it at any time */
-static struct {
-    log_dest_t destinations[MAX_LOG_DESTINATIONS];
-    void *udata;
-    int level;
-    bool quiet;
-    bool level_cli_override;  // if true, log_set_level will fail, if false, log_set_level will succeed 
-    bool quiet_cli_override;
-} log_global_cfg;
+LogGlobalCfg log_global_cfg;
 
 static const char *level_strings[] = {
         "TRACE",
@@ -139,6 +122,7 @@ void log_log(int level, const char *file, int line, const char *fmt, ...) {
         va_end(ev.arg_list);
     }
 
+
     /* you can ignore this for now. 
     *  we iterate through all the registered destinations and call their functions */
     for (int i = 0; i < MAX_LOG_DESTINATIONS && log_global_cfg.destinations[i].fn; i++) {
@@ -177,7 +161,6 @@ int parse_args(int argc, char *argv[]) {
                 log_set_level(LOG_FATAL);
             } else {
                 log_error("TedP Glares: Invalid log level %s\n", optarg);
-                continue;
             }
             break;
 
