@@ -60,7 +60,10 @@ void log_set_level(int level) {
 }
 
 void log_set_quiet(bool enable) {
-    if (log_global_cfg.quiet_cli_override == false) { log_global_cfg.quiet = enable; } 
+    if (log_global_cfg.quiet_cli_override == false) 
+    {
+        log_global_cfg.quiet = enable; 
+    } 
 }
 
 /* this is where we register our logging function */
@@ -109,22 +112,14 @@ void log_log(int level, const char *file, int line, const char *fmt, ...) {
     };
 
     if (!log_global_cfg.quiet && level >= log_global_cfg.level) {
-        
-        /* finishes populating ev with time and output stream (udata) */
         init_event(&ev, stderr);
-
-        /* sets up the arg list with all of our extra args if any */
         va_start(ev.arg_list, fmt);
-        
-        /* HERE'S WHERE LOGGING WORK HAPPENS AND STUFF ACTUALLY GETS PRINTED */
         log_to_stream(&ev);
         
         va_end(ev.arg_list);
     }
 
 
-    /* you can ignore this for now. 
-    *  we iterate through all the registered destinations and call their functions */
     for (int i = 0; i < MAX_LOG_DESTINATIONS && log_global_cfg.destinations[i].fn; i++) {
         log_dest_t *log_dest = &log_global_cfg.destinations[i];
         if (level >= log_dest->level) {
@@ -163,6 +158,7 @@ int parse_args(int argc, char *argv[]) {
                 log_error("TedP Glares: Invalid log level %s\n", optarg);
             }
             log_global_cfg.level_cli_override = true;
+            log_global_cfg.level_cli_override = true;
             break;
 
         case 'q':
@@ -174,3 +170,4 @@ int parse_args(int argc, char *argv[]) {
     }
     return LOGGER_EXIT_SUCCESS;
 }
+

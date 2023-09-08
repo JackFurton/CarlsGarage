@@ -11,14 +11,15 @@
 #define MAX_LOG_DESTINATIONS 420
 
 /* log severity levels */
-enum {
+typedef enum {
     LOG_TRACE,
     LOG_DEBUG,
     LOG_INFO,
     LOG_WARN,
     LOG_ERROR,
-    LOG_FATAL
-};
+    LOG_FATAL,
+    LOG_COUNT
+} log_level;
 
 /* return codes */
 enum {

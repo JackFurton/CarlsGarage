@@ -35,6 +35,7 @@ int main(int argc, char *argv[]) {
                 return EXIT_FAILURE;
             }
             log_global_cfg.level_cli_override = true;
+            log_global_cfg.level_cli_override = true;
             break;
 
         case 'q':

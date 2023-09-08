@@ -3,65 +3,71 @@
 extern "C" {
 #include "../src/logger/logger.h"
 }
-
 #define BOOST_TEST_MODULE LoggerTest
 #include <boost/test/included/unit_test.hpp>
-
 /*
-TODO: add debug.log parsing checks
 
-    FILE *fp = fopen("boost.log", "a");
+/* #TODOS
+----------------------------------------------------------------------
+1) 
+Add tests that make logs using our macros
+and evaluate that the loglines are correct
+
+**** you can register a file for logging like this***
+    FILE *fp = fopen("debug.log", "a");
     if (!fp) return EXIT_FAILURE;
-    log_add_fp(fp, LOG_TRACE);
+    log_add_fp(fp, LOG_DEBUG);
 
-TODO:     
-}*/
+a) register a file
+b) make some logs
+c) parse the logs and validate the format <--- will be a little tricky 
+----------------------------------------------------------------------
+*/
 
 BOOST_AUTO_TEST_SUITE(LoggerSuite)
 
 
-
-/** Important: getopt maintains global state.  Between tests you need to 
-*   reset optind or you will get strange and unexpected behavior.
-*/
-BOOST_AUTO_TEST_CASE(test_getopt_parse_log_level) 
+BOOST_AUTO_TEST_CASE(test_getopt_parse_set_quiet) 
 {
-    optind = 1;
-    log_global_cfg.level_cli_override = false;
-    BOOST_TEST_MESSAGE("STARTING CASE 1 DEBUG");
-    char *fake_debugv[] = { (char*)"woof", (char*)"-l", (char*)"debug"};
-    int fake_debugc= sizeof(fake_debugv) / sizeof(char*);
-    parse_args(fake_debugc, fake_debugv);
-    BOOST_CHECK_EQUAL(log_global_cfg.level, LOG_DEBUG);
-
-    BOOST_CHECK_EQUAL(log_global_cfg.level_cli_override, true);
 
     optind = 1;
     log_global_cfg.level_cli_override = false;
-    BOOST_TEST_MESSAGE("STARTING CASE 2 INFO");
-    char *fake_infov[] = { (char*)"woof", (char*)"-l", (char*)"info"};
-    int fake_infoc= sizeof(fake_infov) / sizeof(char*);
-    parse_args(fake_infoc, fake_infov);
+    BOOST_TEST_MESSAGE("TEST: GETOPT SET QUIET");
+    char *fake_argv[] = { (char*)"woof", (char*)"-q"};
+    int fake_argc= sizeof(fake_argv) / sizeof(char*);
+    parse_args(fake_argc, fake_argv);
+    
+    BOOST_CHECK_EQUAL(log_global_cfg.quiet, true); 
+}
 
-    BOOST_CHECK_EQUAL(log_global_cfg.level, LOG_INFO);
+BOOST_AUTO_TEST_CASE(test_getopt_set_log_level)
+{
 
-    optind = 1;
-    log_global_cfg.level_cli_override = false;
-    BOOST_TEST_MESSAGE("STARTING CASE 3 ERROR");
-    char *fake_errorv[] = { (char*)"woof", (char*)"-l", (char*)"error"};
-    int fake_errorc= sizeof(fake_errorv) / sizeof(char*);
-    parse_args(fake_errorc, fake_errorv);
+std::vector<std::tuple<std::string, log_level>> test_cases = {
+    {"trace",       LOG_TRACE},
+    {"debug",       LOG_DEBUG},
+    {"info",        LOG_INFO},
+    {"warn",        LOG_WARN},
+    {"error",       LOG_ERROR},
+    {"fatal",       LOG_FATAL},
+};
+    
+    /* iterate and test getopt parsing for all log levels */
+    for (const auto&[level_str, level_enum] : test_cases) {
+        BOOST_TEST_MESSAGE("TEST: GETOPT: " + level_str);
+        char *fake_argv[] = {
+            (char*)"program", 
+            (char*)"-l", 
+            (char*)level_str.c_str()};
+        char fake_argc = sizeof(fake_argv) / sizeof(char*); 
 
-    BOOST_CHECK_EQUAL(log_global_cfg.level, LOG_ERROR);
+        parse_args(fake_argc, fake_argv);
+        BOOST_CHECK_EQUAL(log_global_cfg.level, level_enum);
 
-    optind = 1;
-    log_global_cfg.level_cli_override = false;
-    BOOST_TEST_MESSAGE("STARTING CASE 4 QUIET");
-    char *fake_quietv[] = { (char*)"woof", (char*)"-q", (char*)"quiet mode override, logs squelched\n"};
-    int fake_quietc= sizeof(fake_quietv) / sizeof(char*);
-    parse_args(fake_quietc, fake_quietv);
-
-    BOOST_CHECK_EQUAL(log_set_quiet, no_argument);
+        //reset optind and cli override for next iteration
+        log_global_cfg.level_cli_override = false;
+        optind = 1;
+    }
 
 }
 
