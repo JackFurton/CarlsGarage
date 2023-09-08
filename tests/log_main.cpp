@@ -2,6 +2,7 @@
 
 extern "C" {
 #include "../src/logger/logger.h"
+#include "../src/profiler/profiler.h"
 }
 #define BOOST_TEST_MODULE LoggerTest
 #include <boost/test/included/unit_test.hpp>
@@ -29,15 +30,15 @@ BOOST_AUTO_TEST_SUITE(LoggerSuite)
 
 BOOST_AUTO_TEST_CASE(test_getopt_parse_set_quiet) 
 {
-
     optind = 1;
     log_global_cfg.level_cli_override = false;
     BOOST_TEST_MESSAGE("TEST: GETOPT SET QUIET");
     char *fake_argv[] = { (char*)"woof", (char*)"-q"};
     int fake_argc= sizeof(fake_argv) / sizeof(char*);
+
     parse_args(fake_argc, fake_argv);
-    
-    BOOST_CHECK_EQUAL(log_global_cfg.quiet, true); 
+
+    BOOST_CHECK_EQUAL(log_global_cfg.quiet, true);
 }
 
 BOOST_AUTO_TEST_CASE(test_getopt_set_log_level)
@@ -51,7 +52,7 @@ std::vector<std::tuple<std::string, log_level>> test_cases = {
     {"error",       LOG_ERROR},
     {"fatal",       LOG_FATAL},
 };
-    
+
     /* iterate and test getopt parsing for all log levels */
     for (const auto&[level_str, level_enum] : test_cases) {
         BOOST_TEST_MESSAGE("TEST: GETOPT: " + level_str);

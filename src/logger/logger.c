@@ -158,7 +158,6 @@ int parse_args(int argc, char *argv[]) {
                 log_error("TedP Glares: Invalid log level %s\n", optarg);
             }
             log_global_cfg.level_cli_override = true;
-            log_global_cfg.level_cli_override = true;
             break;
 
         case 'q':
