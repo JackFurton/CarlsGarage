@@ -34,6 +34,7 @@ int main(int argc, char *argv[]) {
                 log_error("TedP Glares: Invalid log level %s\n", optarg);
                 return EXIT_FAILURE;
             }
+            log_global_cfg.level_cli_override = true;
             break;
 
         case 'q':

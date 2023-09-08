@@ -26,6 +26,8 @@ BOOST_AUTO_TEST_SUITE(LoggerSuite)
 */
 BOOST_AUTO_TEST_CASE(test_getopt_parse_log_level_debug) 
 {
+    optind = 1;
+    log_global_cfg.level_cli_override = false;
     BOOST_TEST_MESSAGE("STARTING CASE 1");
     char *fake_argv[] = { (char*)"woof", (char*)"-l", (char*)"debug"};
     int fake_argc = sizeof(fake_argv) / sizeof(char*);
@@ -48,6 +50,7 @@ BOOST_AUTO_TEST_CASE(test_getopt_parse_log_level_debug)
 BOOST_AUTO_TEST_CASE(test_getopt_parse_log_level_info) 
 {
     optind = 1;
+    log_global_cfg.level_cli_override = false;
     BOOST_TEST_MESSAGE("STARTING CASE 2");
     char *fake_argv[] = { (char*)"woof", (char*)"-l", (char*)"info"};
     int fake_argc = sizeof(fake_argv) / sizeof(char*);
@@ -61,6 +64,7 @@ BOOST_AUTO_TEST_CASE(test_getopt_parse_log_level_info)
 BOOST_AUTO_TEST_CASE(test_getopt_parse_log_level_error) 
 {
     optind = 1;
+    log_global_cfg.level_cli_override = false;
     BOOST_TEST_MESSAGE("STARTING CASE 3");
     char *fake_argv[] = { (char*)"woof", (char*)"-l", (char*)"error"};
     int fake_argc = sizeof(fake_argv) / sizeof(char*);
