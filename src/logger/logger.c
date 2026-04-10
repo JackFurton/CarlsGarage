@@ -64,6 +64,13 @@ static void log_to_stream(log_event_t *ev) {
 
 }
 
+const char* log_level_name(int level) {
+    if (level < LOG_TRACE || level > LOG_FATAL) {
+        return "UNKNOWN";
+    }
+    return level_strings[level];
+}
+
 //so we're here, and we want to set log level to 0
 int log_get_level(void) {
     return log_global_cfg.level;

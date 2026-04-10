@@ -93,6 +93,19 @@ enum {
 
 /* function declarations, all of our function definitions live in the logger.c file */
 const char* log_level_string(int level);
+
+/**
+ * Convert a log_level_t value to its human-readable name.
+ *
+ * Returns the uppercase string name for each valid severity level:
+ * LOG_TRACE -> "TRACE", LOG_DEBUG -> "DEBUG", LOG_INFO -> "INFO",
+ * LOG_WARN  -> "WARN",  LOG_ERROR -> "ERROR", LOG_FATAL -> "FATAL".
+ * Any value outside the valid range [LOG_TRACE, LOG_FATAL] returns "UNKNOWN".
+ *
+ * @param level  A log_level_t (or int) severity value.
+ * @return       A pointer to a string literal; never NULL.
+ */
+const char* log_level_name(int level);
 int  log_set_level(int level);
 int  log_get_level(void);
 void log_set_quiet(bool enable);
