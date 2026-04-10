@@ -4,6 +4,7 @@ extern "C" {
 
 #include <cstdio>
 #include <cstring>
+#include <cstdlib>
 
 #define BOOST_TEST_MODULE LoggerTest
 #include <boost/test/included/unit_test.hpp>
@@ -351,6 +352,138 @@ BOOST_AUTO_TEST_CASE(test_clear_destinations_idempotent_on_empty) {
 
     log_clear_destinations();
     BOOST_CHECK_EQUAL(log_get_destinations(NULL, 0), 0);
+}
+
+/* ------------------------------------------------------------------ */
+/* log_set_destinations API                                           */
+/* ------------------------------------------------------------------ */
+
+BOOST_AUTO_TEST_CASE(test_set_destinations_bulk_success) {
+    reset_logger();
+
+    FILE *fp1 = tmpfile();
+    FILE *fp2 = tmpfile();
+    BOOST_REQUIRE(fp1 != NULL);
+    BOOST_REQUIRE(fp2 != NULL);
+
+    void *dests[2] = { (void *)fp1, (void *)fp2 };
+    int rc = log_set_destinations(dests, 2);
+
+    BOOST_CHECK_EQUAL(rc, 0);
+    BOOST_CHECK_EQUAL(log_get_destinations(NULL, 0), 2);
+
+    /* Verify the query round-trip returns the same pointers in order */
+    void *out[2] = {NULL, NULL};
+    log_get_destinations(out, 2);
+    BOOST_CHECK_EQUAL(out[0], (void *)fp1);
+    BOOST_CHECK_EQUAL(out[1], (void *)fp2);
+
+    fclose(fp1);
+    fclose(fp2);
+}
+
+BOOST_AUTO_TEST_CASE(test_set_destinations_replaces_existing_list) {
+    reset_logger();
+
+    /* Seed an initial destination */
+    log_add_stderr(LOG_TRACE);
+    BOOST_CHECK_EQUAL(log_get_destinations(NULL, 0), 1);
+
+    FILE *fp = tmpfile();
+    BOOST_REQUIRE(fp != NULL);
+
+    void *dests[1] = { (void *)fp };
+    int rc = log_set_destinations(dests, 1);
+
+    BOOST_CHECK_EQUAL(rc, 0);
+    /* Old stderr destination should be gone; only fp remains */
+    BOOST_CHECK_EQUAL(log_get_destinations(NULL, 0), 1);
+
+    void *out[2] = {NULL, NULL};
+    log_get_destinations(out, 2);
+    BOOST_CHECK_EQUAL(out[0], (void *)fp);
+    BOOST_CHECK_EQUAL(out[1], (void *)NULL);
+
+    fclose(fp);
+}
+
+BOOST_AUTO_TEST_CASE(test_set_destinations_set_then_query_roundtrip) {
+    reset_logger();
+
+    FILE *fp1 = tmpfile();
+    FILE *fp2 = tmpfile();
+    FILE *fp3 = tmpfile();
+    BOOST_REQUIRE(fp1 != NULL);
+    BOOST_REQUIRE(fp2 != NULL);
+    BOOST_REQUIRE(fp3 != NULL);
+
+    void *dests[3] = { (void *)fp1, (void *)fp2, (void *)fp3 };
+    BOOST_REQUIRE_EQUAL(log_set_destinations(dests, 3), 0);
+
+    void *out[3] = {NULL, NULL, NULL};
+    int count = log_get_destinations(out, 3);
+
+    BOOST_CHECK_EQUAL(count, 3);
+    BOOST_CHECK_EQUAL(out[0], (void *)fp1);
+    BOOST_CHECK_EQUAL(out[1], (void *)fp2);
+    BOOST_CHECK_EQUAL(out[2], (void *)fp3);
+
+    fclose(fp1);
+    fclose(fp2);
+    fclose(fp3);
+}
+
+BOOST_AUTO_TEST_CASE(test_set_destinations_empty_list_clears_all) {
+    reset_logger();
+
+    log_add_stderr(LOG_TRACE);
+    log_add_stdout(LOG_TRACE);
+    BOOST_CHECK_EQUAL(log_get_destinations(NULL, 0), 2);
+
+    /* Setting an empty destination list should wipe everything cleanly */
+    int rc = log_set_destinations(NULL, 0);
+    BOOST_CHECK_EQUAL(rc, 0);
+    BOOST_CHECK_EQUAL(log_get_destinations(NULL, 0), 0);
+}
+
+BOOST_AUTO_TEST_CASE(test_set_destinations_partial_failure_preserves_old_list) {
+    reset_logger();
+
+    /* Register a known good destination to form the "old" list */
+    log_add_stderr(LOG_TRACE);
+    BOOST_CHECK_EQUAL(log_get_destinations(NULL, 0), 1);
+
+    /* Fill the destination table to its brim so the second add inside
+     * log_set_destinations() will fail, triggering the rollback path. */
+    for (int i = 1; i < MAX_LOG_DESTINATIONS; i++) {
+        log_add_stderr(LOG_TRACE);
+    }
+    BOOST_CHECK_EQUAL(log_get_destinations(NULL, 0), MAX_LOG_DESTINATIONS);
+
+    /* Now attempt to set two destinations — the table is full after clearing
+     * and re-adding the first one, so the second add must fail and roll back. */
+    FILE *fp1 = tmpfile();
+    FILE *fp2 = tmpfile();
+    BOOST_REQUIRE(fp1 != NULL);
+    BOOST_REQUIRE(fp2 != NULL);
+
+    /* We need exactly MAX_LOG_DESTINATIONS + 1 new entries to force failure.
+     * Simpler approach: request more destinations than the table can hold. */
+    void **big_dests = (void **)malloc((MAX_LOG_DESTINATIONS + 1) * sizeof(void *));
+    BOOST_REQUIRE(big_dests != NULL);
+    for (int i = 0; i <= MAX_LOG_DESTINATIONS; i++) {
+        big_dests[i] = (void *)fp1;
+    }
+
+    int rc = log_set_destinations(big_dests, MAX_LOG_DESTINATIONS + 1);
+
+    /* Must fail and the old list of MAX_LOG_DESTINATIONS entries must be intact */
+    BOOST_CHECK_EQUAL(rc, -1);
+    BOOST_CHECK_EQUAL(log_get_destinations(NULL, 0), MAX_LOG_DESTINATIONS);
+
+    free(big_dests);
+    fclose(fp1);
+    fclose(fp2);
 }
 
 /* ------------------------------------------------------------------ */
