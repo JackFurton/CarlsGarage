@@ -181,6 +181,11 @@ void log_clear_destinations(void) {
  * @return              0 on success, -1 if any registration failed (old list preserved).
  */
 int log_set_destinations(void **destinations, int count) {
+    /* Validate count before touching any state. */
+    if (count < 0 || count > MAX_LOG_DESTINATIONS) {
+        return -1;
+    }
+
     /* Snapshot the current destination table so we can roll back on failure. */
     log_dest_t saved[MAX_LOG_DESTINATIONS];
     memcpy(saved, log_global_cfg.destinations, sizeof(saved));

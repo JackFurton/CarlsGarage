@@ -430,6 +430,108 @@ BOOST_AUTO_TEST_CASE(test_set_destinations_bulk_success) {
     fclose(fp2);
 }
 
+BOOST_AUTO_TEST_CASE(test_set_destinations_replaces_prior_list) {
+    reset_logger();
+
+    /* Start with stderr registered. */
+    log_add_stderr(LOG_TRACE);
+    BOOST_CHECK_EQUAL(log_get_destinations(NULL, 0), 1);
+
+    FILE *fp = tmpfile();
+    BOOST_REQUIRE(fp != NULL);
+
+    /* Replace the whole list with a single tmpfile destination. */
+    void *dests[1] = { (void *)fp };
+    int rc = log_set_destinations(dests, 1);
+
+    BOOST_CHECK_EQUAL(rc, 0);
+    BOOST_CHECK_EQUAL(log_get_destinations(NULL, 0), 1);
+
+    void *out[2] = {NULL, NULL};
+    log_get_destinations(out, 2);
+    /* The new list must contain the tmpfile, not the old stderr. */
+    BOOST_CHECK_EQUAL(out[0], (void *)fp);
+    BOOST_CHECK_EQUAL(out[1], (void *)NULL);
+
+    fclose(fp);
+}
+
+BOOST_AUTO_TEST_CASE(test_set_destinations_count_exceeds_limit_preserves_old_list) {
+    reset_logger();
+
+    /* Register one destination so we have something to preserve. */
+    log_add_stderr(LOG_TRACE);
+    BOOST_CHECK_EQUAL(log_get_destinations(NULL, 0), 1);
+
+    /* Attempt to set with count > MAX_LOG_DESTINATIONS (420). */
+    int rc = log_set_destinations(NULL, 421);
+    BOOST_CHECK_EQUAL(rc, -1);
+
+    /* The prior destination list must be completely intact. */
+    BOOST_CHECK_EQUAL(log_get_destinations(NULL, 0), 1);
+    void *out[1] = {NULL};
+    log_get_destinations(out, 1);
+    BOOST_CHECK_EQUAL(out[0], (void *)stderr);
+}
+
+BOOST_AUTO_TEST_CASE(test_set_destinations_negative_count_preserves_old_list) {
+    reset_logger();
+
+    log_add_stdout(LOG_TRACE);
+    BOOST_CHECK_EQUAL(log_get_destinations(NULL, 0), 1);
+
+    int rc = log_set_destinations(NULL, -1);
+    BOOST_CHECK_EQUAL(rc, -1);
+
+    /* Old list must still be intact. */
+    BOOST_CHECK_EQUAL(log_get_destinations(NULL, 0), 1);
+    void *out[1] = {NULL};
+    log_get_destinations(out, 1);
+    BOOST_CHECK_EQUAL(out[0], (void *)stdout);
+}
+
+BOOST_AUTO_TEST_CASE(test_set_destinations_zero_count_clears_all) {
+    reset_logger();
+
+    log_add_stderr(LOG_TRACE);
+    log_add_stdout(LOG_TRACE);
+    BOOST_CHECK_EQUAL(log_get_destinations(NULL, 0), 2);
+
+    /* Setting with count=0 and NULL array should clear everything. */
+    int rc = log_set_destinations(NULL, 0);
+    BOOST_CHECK_EQUAL(rc, 0);
+    BOOST_CHECK_EQUAL(log_get_destinations(NULL, 0), 0);
+}
+
+BOOST_AUTO_TEST_CASE(test_set_destinations_get_destinations_round_trip) {
+    reset_logger();
+
+    FILE *fp1 = tmpfile();
+    FILE *fp2 = tmpfile();
+    FILE *fp3 = tmpfile();
+    BOOST_REQUIRE(fp1 != NULL);
+    BOOST_REQUIRE(fp2 != NULL);
+    BOOST_REQUIRE(fp3 != NULL);
+
+    void *dests[3] = { (void *)fp1, (void *)fp2, (void *)fp3 };
+    int rc = log_set_destinations(dests, 3);
+    BOOST_CHECK_EQUAL(rc, 0);
+
+    /* log_get_destinations must return exactly what was set, in order. */
+    void *out[4] = {NULL, NULL, NULL, NULL};
+    int count = log_get_destinations(out, 4);
+    BOOST_CHECK_EQUAL(count, 3);
+    BOOST_CHECK_EQUAL(out[0], (void *)fp1);
+    BOOST_CHECK_EQUAL(out[1], (void *)fp2);
+    BOOST_CHECK_EQUAL(out[2], (void *)fp3);
+    BOOST_CHECK_EQUAL(out[3], (void *)NULL);
+
+    fclose(fp1);
+    fclose(fp2);
+    fclose(fp3);
+}e(fp2);
+}
+
 BOOST_AUTO_TEST_CASE(test_set_destinations_replaces_existing_list) {
     reset_logger();
 
