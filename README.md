@@ -4,7 +4,7 @@
 
 CarlsGarage is a lightweight C/C++ utility library focused on practical, low-overhead tooling for systems programming. The centerpiece right now is the `logger` module — a straightforward, zero-dependency logging library that lets you emit timestamped, severity-tagged log lines to `stderr` or any `FILE *` destination you choose.
 
-The `logger` module supports six severity levels (`TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR`, `FATAL`) and exposes a clean macro-based API so call-site code stays readable. You can register up to 420 custom log destinations (file pointers or function-pointer callbacks), set a minimum log level to filter noise, and suppress all output with quiet mode. A companion `throttled.h` header provides a `throttled(seconds, expr)` macro that rate-limits any expression — handy when you want to log inside a hot loop without drowning in output.
+The `logger` module supports six severity levels (`TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR`, `FATAL`) and exposes a clean macro-based API so call-site code stays readable. You can register up to 420 custom log destinations (file pointers or function-pointer callbacks), set a minimum log level to filter noise, and suppress all output with quiet mode. You can also query the current quiet state at runtime with `log_get_quiet()`. A companion `throttled.h` header provides a `throttled(seconds, expr)` macro that rate-limits any expression — handy when you want to log inside a hot loop without drowning in output.
 
 ## Building
 
@@ -18,6 +18,39 @@ make
 ```
 
 The build produces a `logger` static library and a `test_logger` test executable.
+
+## Logger API
+
+### Quiet mode
+
+```c
+/* Suppress all log output */
+void log_set_quiet(bool enable);
+
+/* Query the current quiet mode state.
+ * Returns 1 if quiet mode is enabled (all output suppressed), 0 otherwise. */
+int log_get_quiet(void);
+```
+
+**Example:**
+
+```c
+log_set_quiet(true);
+if (log_get_quiet()) {
+    /* logging is currently suppressed */
+}
+log_set_quiet(false);
+```
+
+### Log level
+
+```c
+/* Set the minimum severity level that will be emitted */
+void log_set_level(int level);  /* LOG_TRACE, LOG_DEBUG, LOG_INFO, LOG_WARN, LOG_ERROR, LOG_FATAL */
+
+/* Query the current minimum level */
+int log_get_level(void);
+```
 
 ### Allegro 5 (optional — Linux)
 
