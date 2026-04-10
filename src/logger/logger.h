@@ -94,6 +94,7 @@ enum {
 /* function declarations, all of our function definitions live in the logger.c file */
 const char* log_level_string(int level);
 void log_set_level(int level);
+int  log_get_level(void);
 void log_set_quiet(bool enable);
 int log_add_destination(log_LogFn fn, void *udata, int level);
 int log_add_fp(FILE *fp, int level);
