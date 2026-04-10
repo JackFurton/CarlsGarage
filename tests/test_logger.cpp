@@ -19,6 +19,49 @@ static void reset_logger(void) {
 }
 
 /* ------------------------------------------------------------------ */
+/* log_clear_destinations API                                          */
+/* ------------------------------------------------------------------ */
+
+/* Test 1: calling clear on an already-empty list is a safe no-op. */
+BOOST_AUTO_TEST_CASE(test_clear_destinations_on_empty_is_idempotent) {
+    reset_logger();
+
+    /* Should not crash, corrupt state, or underflow any counter. */
+    log_clear_destinations();
+    log_clear_destinations();
+
+    BOOST_CHECK_EQUAL(log_get_destinations(NULL, 0), 0);
+}
+
+/* Test 2: populate the list, clear it, verify the count drops to zero. */
+BOOST_AUTO_TEST_CASE(test_clear_destinations_drops_count_to_zero) {
+    reset_logger();
+
+    log_add_stderr(LOG_TRACE);
+    log_add_stdout(LOG_TRACE);
+    BOOST_CHECK_EQUAL(log_get_destinations(NULL, 0), 2);
+
+    log_clear_destinations();
+
+    BOOST_CHECK_EQUAL(log_get_destinations(NULL, 0), 0);
+}
+
+/* Test 3: clear, then re-register — confirms the slot scanner is truly
+ * reset and accepts fresh registrations without getting stuck. */
+BOOST_AUTO_TEST_CASE(test_clear_destinations_then_re_register) {
+    reset_logger();
+
+    log_add_stderr(LOG_TRACE);
+    log_add_stdout(LOG_TRACE);
+    log_clear_destinations();
+
+    /* After clearing, new registrations must succeed from slot zero. */
+    int rc = log_add_stderr(LOG_WARN);
+    BOOST_CHECK_EQUAL(rc, 0);
+    BOOST_CHECK_EQUAL(log_get_destinations(NULL, 0), 1);
+}
+
+/* ------------------------------------------------------------------ */
 /* log_level_name API                                                  */
 /* ------------------------------------------------------------------ */
 
