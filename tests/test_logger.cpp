@@ -21,6 +21,25 @@ static void reset_logger(void) {
 /* Level API                                                           */
 /* ------------------------------------------------------------------ */
 
+BOOST_AUTO_TEST_CASE(test_get_level_default_is_trace) {
+    reset_logger();
+
+    BOOST_CHECK_EQUAL(log_get_level(), LOG_TRACE);
+}
+
+BOOST_AUTO_TEST_CASE(test_get_level_save_and_restore) {
+    reset_logger();
+
+    log_set_level(LOG_WARN);
+    int saved = log_get_level();
+
+    log_set_level(LOG_ERROR);
+    BOOST_CHECK_EQUAL(log_get_level(), LOG_ERROR);
+
+    log_set_level(saved);
+    BOOST_CHECK_EQUAL(log_get_level(), LOG_WARN);
+}
+
 BOOST_AUTO_TEST_CASE(test_get_level_returns_set_level) {
     reset_logger();
 
