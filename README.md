@@ -19,6 +19,37 @@ make
 
 The build produces a `logger` static library and a `test_logger` test executable.
 
+### Allegro 5 (optional — Linux)
+
+The build system will automatically detect [Allegro 5](https://liballegro.org/) and, if found, compile a small `allegro_demo` executable that opens a window and exercises the logger alongside Allegro's event loop. This is the recommended way to verify that the two libraries play nicely together on your system.
+
+**Install Allegro 5 on common Linux distros:**
+
+```bash
+# Debian / Ubuntu
+sudo apt install liballegro5-dev liballegro-font5-dev liballegro-primitives5-dev
+
+# Arch Linux
+sudo pacman -S allegro
+
+# Fedora / RHEL
+sudo dnf install allegro5-devel
+```
+
+After installing, just re-run `cmake ..` and `make` — CMake will detect the library via `find_package` first, then fall back to `pkg-config` if a CMake config file is not present. You should see a confirmation line in the CMake output:
+
+```
+-- Allegro 5 found — building allegro_demo target
+```
+
+If Allegro is not installed you will instead see:
+
+```
+-- Allegro 5 not found — skipping allegro_demo target.
+```
+
+and everything else will build normally. No breakage, no mandatory dependency.
+
 ## Basic Usage
 
 Include the logger header, optionally configure a log level and/or a file destination, then use the level macros to write log lines.
