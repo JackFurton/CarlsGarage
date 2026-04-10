@@ -64,6 +64,13 @@ static void log_to_stream(log_event_t *ev) {
 
 }
 
+const char* log_level_string(int level) {
+    if (level < LOG_TRACE || level > LOG_FATAL) {
+        return "UNKNOWN";
+    }
+    return level_strings[level];
+}
+
 const char* log_level_name(int level) {
     if (level < LOG_TRACE || level > LOG_FATAL) {
         return "UNKNOWN";
