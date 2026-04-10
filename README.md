@@ -41,7 +41,29 @@ log_set_level(saved);
  * pointers (FILE * or callback udata) for the active destinations, in
  * registration order.  Slots beyond the active count are left untouched.
  *
- * Returns the total number of active destinations regardless of out_size. */
+ * Returns the total number of active destinations regardless of out_size,
+ * so callers can pass NULL/0 for a cheap count-only check. */
+int log_get_destinations(void **out_destinations, int out_size);
+```
+
+**Example:**
+
+```c
+/* Count-only call — no buffer needed */
+int n = log_get_destinations(NULL, 0);
+printf("active destinations: %d\n", n);
+
+/* Retrieve up to 8 udata pointers */
+void *dests[8];
+int total = log_get_destinations(dests, 8);
+for (int i = 0; i < total && i < 8; i++) {
+    printf("destination %d udata: %p\n", i, dests[i]);
+}
+
+/* Safe even when size < count — returns true total, writes only size slots */
+void *first[1];
+int count = log_get_destinations(first, 1); /* count may be > 1 */
+``` out_size. */
 int log_get_destinations(void **out_destinations, int out_size);
 ```
 
