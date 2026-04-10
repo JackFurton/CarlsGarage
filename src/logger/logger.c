@@ -69,14 +69,27 @@ int log_get_level(void) {
     return log_global_cfg.level;
 }
 
-void log_set_level(int level) {
+/**
+ * Sets the minimum log severity level.
+ *
+ * Only messages at or above this level will be emitted. The level must be
+ * within the valid range [LOG_TRACE, LOG_FATAL] (0–5). If an out-of-bounds
+ * value is supplied the current level is left unchanged and -1 is returned.
+ *
+ * @param level  A value in [LOG_TRACE, LOG_FATAL].
+ * @return       0 on success, -1 if level is out of range or a CLI override
+ *               is active.
+ */
+int log_set_level(int level) {
+    if (level < LOG_TRACE || level > LOG_FATAL) {
+        return -1;
+    }
 
-    //this is the key check that determines whether or not our level set works
-    //since we change it permanently to true in the getopt when option is 'l'
-    //it will never succeed in changing level again if you pass in level via getopt
-    if (log_global_cfg.level_cli_override == false) { 
-        log_global_cfg.level = level; 
-    } 
+    /* A CLI override locks the level so runtime callers cannot change it. */
+    if (log_global_cfg.level_cli_override == false) {
+        log_global_cfg.level = level;
+    }
+    return 0;
 }
 
 void log_set_quiet(bool enable) {

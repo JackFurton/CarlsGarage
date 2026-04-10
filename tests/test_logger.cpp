@@ -74,7 +74,55 @@ BOOST_AUTO_TEST_CASE(test_set_level_all_values) {
 
     const int levels[] = { LOG_TRACE, LOG_DEBUG, LOG_INFO, LOG_WARN, LOG_ERROR, LOG_FATAL };
     for (int i = 0; i < 6; i++) {
+        int rc = log_set_level(levels[i]);
+        BOOST_CHECK_EQUAL(rc, 0);
+        BOOST_CHECK_EQUAL(log_get_level(), levels[i]);
+    }
+}
+
+BOOST_AUTO_TEST_CASE(test_set_level_returns_zero_on_success) {
+    reset_logger();
+
+    BOOST_CHECK_EQUAL(log_set_level(LOG_TRACE), 0);
+    BOOST_CHECK_EQUAL(log_set_level(LOG_DEBUG), 0);
+    BOOST_CHECK_EQUAL(log_set_level(LOG_INFO),  0);
+    BOOST_CHECK_EQUAL(log_set_level(LOG_WARN),  0);
+    BOOST_CHECK_EQUAL(log_set_level(LOG_ERROR), 0);
+    BOOST_CHECK_EQUAL(log_set_level(LOG_FATAL), 0);
+}
+
+BOOST_AUTO_TEST_CASE(test_set_level_rejects_negative_value) {
+    reset_logger();
+
+    log_set_level(LOG_WARN);
+    int rc = log_set_level(-1);
+    BOOST_CHECK_EQUAL(rc, -1);
+    /* Level must be unchanged after a rejected set attempt. */
+    BOOST_CHECK_EQUAL(log_get_level(), LOG_WARN);
+}
+
+BOOST_AUTO_TEST_CASE(test_set_level_rejects_out_of_bounds_high) {
+    reset_logger();
+
+    log_set_level(LOG_INFO);
+    int rc = log_set_level(999);
+    BOOST_CHECK_EQUAL(rc, -1);
+    /* Level must be unchanged after a rejected set attempt. */
+    BOOST_CHECK_EQUAL(log_get_level(), LOG_INFO);
+}
+
+BOOST_AUTO_TEST_CASE(test_set_level_preserves_level_on_invalid_input) {
+    reset_logger();
+
+    /* Walk through several valid levels and confirm that injecting an invalid
+     * value between each step never corrupts the previously-set level. */
+    const int levels[] = { LOG_DEBUG, LOG_WARN, LOG_FATAL };
+    for (int i = 0; i < 3; i++) {
         log_set_level(levels[i]);
+        /* Attempt a bad set — level must survive unscathed. */
+        BOOST_CHECK_EQUAL(log_set_level(-99), -1);
+        BOOST_CHECK_EQUAL(log_get_level(), levels[i]);
+        BOOST_CHECK_EQUAL(log_set_level(LOG_FATAL + 1), -1);
         BOOST_CHECK_EQUAL(log_get_level(), levels[i]);
     }
 }
