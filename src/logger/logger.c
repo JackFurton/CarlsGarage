@@ -79,7 +79,16 @@ void log_set_level(int level) {
 }
 
 void log_set_quiet(bool enable) {
-    if (log_global_cfg.quiet_cli_override == false) { log_global_cfg.quiet = enable; } 
+    if (log_global_cfg.quiet_cli_override == false) { log_global_cfg.quiet = enable; }
+}
+
+/**
+ * Returns the current quiet mode state.
+ *
+ * @return 1 if quiet mode is enabled (all log output suppressed), 0 otherwise.
+ */
+int log_get_quiet(void) {
+    return log_global_cfg.quiet ? 1 : 0;
 }
 
 /* this is where we register our logging function */
