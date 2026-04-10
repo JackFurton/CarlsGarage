@@ -107,6 +107,23 @@ int log_add_fp(FILE *fp, int level) {
     return log_add_destination(log_to_stream, fp, level);
 }
 
+/* convenience: register stdout as a log destination */
+int log_add_stdout(int level) {
+    return log_add_destination(log_to_stream, stdout, level);
+}
+
+/* convenience: register stderr as a log destination */
+int log_add_stderr(int level) {
+    return log_add_destination(log_to_stream, stderr, level);
+}
+
+/* remove all registered destinations (useful for test teardown and runtime reconfiguration) */
+void log_remove_destinations(void) {
+    for (int i = 0; i < MAX_LOG_DESTINATIONS; i++) {
+        log_global_cfg.destinations[i] = (log_dest_t){ NULL, NULL, 0 };
+    }
+}
+
 /* populate our log event struct with time and output stream data */
 static void init_event(log_event_t *ev, void *udata) {
     if (!ev->time) {
@@ -137,17 +154,23 @@ void log_log(int level, const char *file, int line, const char *fmt, ...) {
     };
 
     if (!log_global_cfg.quiet && level >= log_global_cfg.level) {
-        
-        /* finishes populating ev with time and output stream (udata) */
-        init_event(&ev, stderr);
 
-        /* sets up the arg list with all of our extra args if any */
-        va_start(ev.arg_list, fmt);
-        
-        /* HERE'S WHERE LOGGING WORK HAPPENS AND STUFF ACTUALLY GETS PRINTED */
-        log_to_stream(&ev);
-        
-        va_end(ev.arg_list);
+        /* If no destinations are registered, fall back to stderr so log output
+         * is never silently swallowed. */
+        bool has_destinations = false;
+        for (int i = 0; i < MAX_LOG_DESTINATIONS; i++) {
+            if (log_global_cfg.destinations[i].fn) {
+                has_destinations = true;
+                break;
+            }
+        }
+
+        if (!has_destinations) {
+            init_event(&ev, stderr);
+            va_start(ev.arg_list, fmt);
+            log_to_stream(&ev);
+            va_end(ev.arg_list);
+        }
     }
 
     /* you can ignore this for now. 

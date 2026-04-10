@@ -97,7 +97,10 @@ void log_set_level(int level);
 int  log_get_level(void);
 void log_set_quiet(bool enable);
 int  log_get_quiet(void);
-int log_add_destination(log_LogFn fn, void *udata, int level);
-int log_add_fp(FILE *fp, int level);
+int  log_add_destination(log_LogFn fn, void *udata, int level);
+int  log_add_fp(FILE *fp, int level);
+int  log_add_stdout(int level);
+int  log_add_stderr(int level);
+void log_remove_destinations(void);
 
 void log_log(int level, const char *file, int line, const char *fmt, ...);
