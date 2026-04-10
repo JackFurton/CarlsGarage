@@ -1,4 +1,5 @@
 #include "logger.h"
+#include <string.h>
 
 #define MAX_LOG_DESTINATIONS 420
 
@@ -152,6 +153,36 @@ void log_remove_destinations(void) {
  * mirrors the pattern of log_set_level() and log_set_quiet() for runtime reconfiguration */
 void log_clear_destinations(void) {
     log_remove_destinations();
+}
+
+/**
+ * Atomically replace the entire destination list with the provided array of udata pointers.
+ *
+ * Each pointer in destinations[] is registered via log_add_fp() using LOG_TRACE as the
+ * minimum level.  If any registration fails (e.g., the table is full), the original
+ * destination list is restored and -1 is returned so the caller is never left in a
+ * partial state.
+ *
+ * @param destinations  Array of FILE * (cast to void *) to register as new destinations.
+ * @param count         Number of entries in the destinations array.
+ * @return              0 on success, -1 if any registration failed (old list preserved).
+ */
+int log_set_destinations(void **destinations, int count) {
+    /* Snapshot the current destination table so we can roll back on failure. */
+    log_dest_t saved[MAX_LOG_DESTINATIONS];
+    memcpy(saved, log_global_cfg.destinations, sizeof(saved));
+
+    log_clear_destinations();
+
+    for (int i = 0; i < count; i++) {
+        if (log_add_fp((FILE *)destinations[i], LOG_TRACE) != 0) {
+            /* Registration failed — restore the previous destination list. */
+            memcpy(log_global_cfg.destinations, saved, sizeof(saved));
+            return -1;
+        }
+    }
+
+    return 0;
 }
 
 /* populate our log event struct with time and output stream data */
