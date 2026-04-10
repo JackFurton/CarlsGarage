@@ -48,6 +48,30 @@ int main(void) {
 }
 ```
 
+### Stdout / Stderr Convenience Functions
+
+In addition to `log_add_fp()`, two convenience wrappers let you direct output to the standard streams without holding a `FILE *` yourself:
+
+```c
+log_add_stdout(LOG_DEBUG);  /* send DEBUG and above to stdout */
+log_add_stderr(LOG_WARN);   /* send WARN and above to stderr  */
+```
+
+Both functions accept the same log-level argument as `log_add_fp()` and return `0` on success or `-1` if the destination table is full.
+
+### Resetting Destinations at Runtime
+
+Call `log_remove_destinations()` to clear every registered destination in one shot. This is handy between test cases or when you want to reconfigure where logs go without restarting your program:
+
+```c
+log_remove_destinations();        /* clear everything           */
+log_add_fp(new_fp, LOG_INFO);     /* register fresh destination */
+```
+
+### Default Fallback Behaviour
+
+If you have not registered any destinations, the logger falls back to writing to `stderr` automatically so log output is never silently swallowed. The moment you register at least one destination, the fallback is bypassed and only your registered destinations receive log lines.
+
 ### Callback Destinations
 
 Beyond file pointers, the logger lets you register any function that matches the `log_LogFn` signature as a log destination. This is handy when you want to ship log lines somewhere a `FILE *` can't reach — a ring buffer, a network socket, a GUI console, or a remote telemetry service.
