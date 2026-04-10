@@ -27,6 +27,21 @@ BOOST_AUTO_TEST_CASE(test_get_level_default_is_trace) {
     BOOST_CHECK_EQUAL(log_get_level(), LOG_TRACE);
 }
 
+/* Verify the zero-initialised default: LOG_TRACE == 0, so a never-written
+ * global config struct must already satisfy log_get_level() == LOG_TRACE
+ * without any prior call to log_set_level().  We validate this by zeroing
+ * the struct directly and reading back through the public API. */
+BOOST_AUTO_TEST_CASE(test_get_level_zero_initialized_default) {
+    /* Wipe the entire config struct to simulate a truly fresh, never-touched
+     * state — no log_set_level() call anywhere in the call chain. */
+    memset(&log_global_cfg, 0, sizeof(log_global_cfg));
+
+    BOOST_CHECK_EQUAL(log_get_level(), LOG_TRACE);
+
+    /* Restore to a clean baseline so subsequent tests are not affected. */
+    reset_logger();
+}
+
 BOOST_AUTO_TEST_CASE(test_get_level_save_and_restore) {
     reset_logger();
 
