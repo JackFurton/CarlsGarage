@@ -170,6 +170,84 @@ BOOST_AUTO_TEST_CASE(test_file_destination_passes_at_or_above_level) {
 }
 
 /* ------------------------------------------------------------------ */
+/* Destination query API                                              */
+/* ------------------------------------------------------------------ */
+
+BOOST_AUTO_TEST_CASE(test_get_destinations_returns_zero_when_empty) {
+    reset_logger();
+
+    int count = log_get_destinations(NULL, 0);
+    BOOST_CHECK_EQUAL(count, 0);
+}
+
+BOOST_AUTO_TEST_CASE(test_get_destinations_counts_registered_destinations) {
+    reset_logger();
+
+    log_add_stderr(LOG_TRACE);
+    BOOST_CHECK_EQUAL(log_get_destinations(NULL, 0), 1);
+
+    log_add_stdout(LOG_INFO);
+    BOOST_CHECK_EQUAL(log_get_destinations(NULL, 0), 2);
+
+    FILE *fp = tmpfile();
+    BOOST_REQUIRE(fp != NULL);
+    log_add_fp(fp, LOG_WARN);
+    BOOST_CHECK_EQUAL(log_get_destinations(NULL, 0), 3);
+
+    fclose(fp);
+}
+
+BOOST_AUTO_TEST_CASE(test_get_destinations_count_resets_after_remove) {
+    reset_logger();
+
+    log_add_stderr(LOG_TRACE);
+    log_add_stdout(LOG_TRACE);
+    BOOST_CHECK_EQUAL(log_get_destinations(NULL, 0), 2);
+
+    log_remove_destinations();
+    BOOST_CHECK_EQUAL(log_get_destinations(NULL, 0), 0);
+}
+
+BOOST_AUTO_TEST_CASE(test_get_destinations_populates_output_array) {
+    reset_logger();
+
+    FILE *fp = tmpfile();
+    BOOST_REQUIRE(fp != NULL);
+
+    log_add_fp(fp, LOG_TRACE);
+    log_add_stderr(LOG_TRACE);
+
+    void *out[4] = {NULL};
+    int count = log_get_destinations(out, 4);
+
+    BOOST_CHECK_EQUAL(count, 2);
+    /* First registered destination's udata should be the tmpfile pointer */
+    BOOST_CHECK_EQUAL(out[0], (void *)fp);
+    /* Second registered destination's udata should be stderr */
+    BOOST_CHECK_EQUAL(out[1], (void *)stderr);
+
+    fclose(fp);
+}
+
+BOOST_AUTO_TEST_CASE(test_get_destinations_respects_out_size_cap) {
+    reset_logger();
+
+    log_add_stderr(LOG_TRACE);
+    log_add_stdout(LOG_TRACE);
+
+    /* Ask for only one slot even though two are registered */
+    void *out[2] = {NULL, NULL};
+    int count = log_get_destinations(out, 1);
+
+    /* Count still reflects reality */
+    BOOST_CHECK_EQUAL(count, 2);
+    /* Only the first slot was written */
+    BOOST_CHECK_EQUAL(out[0], (void *)stderr);
+    /* Second slot untouched */
+    BOOST_CHECK_EQUAL(out[1], (void *)NULL);
+}
+
+/* ------------------------------------------------------------------ */
 /* Callback destination                                               */
 /* ------------------------------------------------------------------ */
 
