@@ -61,6 +61,60 @@ BOOST_AUTO_TEST_CASE(test_level_name_never_returns_null) {
 }
 
 /* ------------------------------------------------------------------ */
+/* log_level_to_string / log_level_string API                          */
+/* ------------------------------------------------------------------ */
+
+BOOST_AUTO_TEST_CASE(test_level_string_trace) {
+    BOOST_CHECK_EQUAL(std::string(log_level_string(LOG_TRACE)), "TRACE");
+}
+
+BOOST_AUTO_TEST_CASE(test_level_string_debug) {
+    BOOST_CHECK_EQUAL(std::string(log_level_string(LOG_DEBUG)), "DEBUG");
+}
+
+BOOST_AUTO_TEST_CASE(test_level_string_info) {
+    BOOST_CHECK_EQUAL(std::string(log_level_string(LOG_INFO)), "INFO");
+}
+
+BOOST_AUTO_TEST_CASE(test_level_string_warn) {
+    BOOST_CHECK_EQUAL(std::string(log_level_string(LOG_WARN)), "WARN");
+}
+
+BOOST_AUTO_TEST_CASE(test_level_string_error) {
+    BOOST_CHECK_EQUAL(std::string(log_level_string(LOG_ERROR)), "ERROR");
+}
+
+BOOST_AUTO_TEST_CASE(test_level_string_fatal) {
+    BOOST_CHECK_EQUAL(std::string(log_level_string(LOG_FATAL)), "FATAL");
+}
+
+BOOST_AUTO_TEST_CASE(test_level_string_out_of_range_returns_unknown) {
+    BOOST_CHECK_EQUAL(std::string(log_level_string(-1)),  "UNKNOWN");
+    BOOST_CHECK_EQUAL(std::string(log_level_string(999)), "UNKNOWN");
+    BOOST_CHECK_EQUAL(std::string(log_level_string(LOG_FATAL + 1)), "UNKNOWN");
+}
+
+BOOST_AUTO_TEST_CASE(test_level_string_never_returns_null) {
+    const int probes[] = { LOG_TRACE, LOG_DEBUG, LOG_INFO, LOG_WARN, LOG_ERROR, LOG_FATAL, -1, 42 };
+    for (int i = 0; i < 8; i++) {
+        BOOST_CHECK(log_level_string(probes[i]) != NULL);
+    }
+}
+
+BOOST_AUTO_TEST_CASE(test_level_string_combined_with_get_level) {
+    reset_logger();
+
+    /* The canonical use-case from the issue: query the level, convert to string. */
+    log_set_level(LOG_WARN);
+    int current = log_get_level();
+    BOOST_CHECK_EQUAL(std::string(log_level_string(current)), "WARN");
+
+    log_set_level(LOG_ERROR);
+    current = log_get_level();
+    BOOST_CHECK_EQUAL(std::string(log_level_string(current)), "ERROR");
+}
+
+/* ------------------------------------------------------------------ */
 /* Level API                                                           */
 /* ------------------------------------------------------------------ */
 
