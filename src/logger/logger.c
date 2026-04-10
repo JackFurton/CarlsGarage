@@ -64,6 +64,10 @@ static void log_to_stream(log_event_t *ev) {
 }
 
 //so we're here, and we want to set log level to 0
+int log_get_level(void) {
+    return log_global_cfg.level;
+}
+
 void log_set_level(int level) {
 
     //this is the key check that determines whether or not our level set works
