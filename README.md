@@ -48,8 +48,18 @@ log_set_quiet(false);
 /* Set the minimum severity level that will be emitted */
 void log_set_level(int level);  /* LOG_TRACE, LOG_DEBUG, LOG_INFO, LOG_WARN, LOG_ERROR, LOG_FATAL */
 
-/* Query the current minimum level */
+/* Query the current minimum log level.
+ * Returns the current threshold constant (e.g. LOG_INFO). */
 int log_get_level(void);
+```
+
+**Example:**
+
+```c
+log_set_level(LOG_WARN);
+if (log_get_level() <= LOG_DEBUG) {
+    /* debug logging is active — safe to do expensive preprocessing */
+}
 ```
 
 ### Allegro 5 (optional — Linux)
