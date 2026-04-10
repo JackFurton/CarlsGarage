@@ -214,6 +214,26 @@ BOOST_AUTO_TEST_CASE(test_get_destinations_returns_zero_when_empty) {
     BOOST_CHECK_EQUAL(count, 0);
 }
 
+/* Explicitly validate the NULL-buffer count-only call pattern documented in
+ * the README: passing (NULL, 0) returns the active destination count without
+ * requiring the caller to allocate or supply a buffer. */
+BOOST_AUTO_TEST_CASE(test_get_destinations_null_buffer_count_only) {
+    reset_logger();
+
+    /* No destinations yet — count-only call must return 0 safely. */
+    BOOST_CHECK_EQUAL(log_get_destinations(NULL, 0), 0);
+
+    log_add_stderr(LOG_TRACE);
+    log_add_stdout(LOG_INFO);
+
+    /* With two destinations registered, count-only call must return 2. */
+    BOOST_CHECK_EQUAL(log_get_destinations(NULL, 0), 2);
+
+    /* Passing out_size > 0 with a NULL pointer must still return the count
+     * without dereferencing the NULL — callers rely on this being safe. */
+    BOOST_CHECK_EQUAL(log_get_destinations(NULL, 10), 2);
+}
+
 BOOST_AUTO_TEST_CASE(test_get_destinations_counts_registered_destinations) {
     reset_logger();
 
