@@ -102,6 +102,7 @@ int  log_add_fp(FILE *fp, int level);
 int  log_add_stdout(int level);
 int  log_add_stderr(int level);
 void log_remove_destinations(void);
+void log_clear_destinations(void);
 int  log_get_destinations(void **out_destinations, int out_size);
 
 void log_log(int level, const char *file, int line, const char *fmt, ...);
