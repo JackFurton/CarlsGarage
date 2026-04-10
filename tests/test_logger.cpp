@@ -19,6 +19,48 @@ static void reset_logger(void) {
 }
 
 /* ------------------------------------------------------------------ */
+/* log_level_name API                                                  */
+/* ------------------------------------------------------------------ */
+
+BOOST_AUTO_TEST_CASE(test_level_name_trace) {
+    BOOST_CHECK_EQUAL(std::string(log_level_name(LOG_TRACE)), "TRACE");
+}
+
+BOOST_AUTO_TEST_CASE(test_level_name_debug) {
+    BOOST_CHECK_EQUAL(std::string(log_level_name(LOG_DEBUG)), "DEBUG");
+}
+
+BOOST_AUTO_TEST_CASE(test_level_name_info) {
+    BOOST_CHECK_EQUAL(std::string(log_level_name(LOG_INFO)), "INFO");
+}
+
+BOOST_AUTO_TEST_CASE(test_level_name_warn) {
+    BOOST_CHECK_EQUAL(std::string(log_level_name(LOG_WARN)), "WARN");
+}
+
+BOOST_AUTO_TEST_CASE(test_level_name_error) {
+    BOOST_CHECK_EQUAL(std::string(log_level_name(LOG_ERROR)), "ERROR");
+}
+
+BOOST_AUTO_TEST_CASE(test_level_name_fatal) {
+    BOOST_CHECK_EQUAL(std::string(log_level_name(LOG_FATAL)), "FATAL");
+}
+
+BOOST_AUTO_TEST_CASE(test_level_name_out_of_range_returns_unknown) {
+    BOOST_CHECK_EQUAL(std::string(log_level_name(-1)),  "UNKNOWN");
+    BOOST_CHECK_EQUAL(std::string(log_level_name(999)), "UNKNOWN");
+    BOOST_CHECK_EQUAL(std::string(log_level_name(LOG_FATAL + 1)), "UNKNOWN");
+}
+
+BOOST_AUTO_TEST_CASE(test_level_name_never_returns_null) {
+    /* Every valid level and one invalid level must return a non-NULL pointer. */
+    const int probes[] = { LOG_TRACE, LOG_DEBUG, LOG_INFO, LOG_WARN, LOG_ERROR, LOG_FATAL, -1, 42 };
+    for (int i = 0; i < 8; i++) {
+        BOOST_CHECK(log_level_name(probes[i]) != NULL);
+    }
+}
+
+/* ------------------------------------------------------------------ */
 /* Level API                                                           */
 /* ------------------------------------------------------------------ */
 
