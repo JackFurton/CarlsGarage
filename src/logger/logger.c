@@ -148,6 +148,12 @@ void log_remove_destinations(void) {
     }
 }
 
+/* clear all registered destinations and reset to a known empty state;
+ * mirrors the pattern of log_set_level() and log_set_quiet() for runtime reconfiguration */
+void log_clear_destinations(void) {
+    log_remove_destinations();
+}
+
 /* populate our log event struct with time and output stream data */
 static void init_event(log_event_t *ev, void *udata) {
     if (!ev->time) {

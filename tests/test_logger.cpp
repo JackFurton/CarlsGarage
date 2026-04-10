@@ -302,6 +302,58 @@ BOOST_AUTO_TEST_CASE(test_get_destinations_respects_out_size_cap) {
 }
 
 /* ------------------------------------------------------------------ */
+/* log_clear_destinations API                                         */
+/* ------------------------------------------------------------------ */
+
+BOOST_AUTO_TEST_CASE(test_clear_destinations_removes_all) {
+    reset_logger();
+
+    log_add_stderr(LOG_TRACE);
+    log_add_stdout(LOG_INFO);
+
+    FILE *fp = tmpfile();
+    BOOST_REQUIRE(fp != NULL);
+    log_add_fp(fp, LOG_WARN);
+
+    /* Confirm three destinations are registered before clearing */
+    BOOST_CHECK_EQUAL(log_get_destinations(NULL, 0), 3);
+
+    log_clear_destinations();
+
+    /* After clearing, the count must be zero */
+    BOOST_CHECK_EQUAL(log_get_destinations(NULL, 0), 0);
+
+    fclose(fp);
+}
+
+BOOST_AUTO_TEST_CASE(test_clear_destinations_allows_reregistration) {
+    reset_logger();
+
+    log_add_stderr(LOG_TRACE);
+    log_add_stdout(LOG_TRACE);
+    BOOST_CHECK_EQUAL(log_get_destinations(NULL, 0), 2);
+
+    log_clear_destinations();
+    BOOST_CHECK_EQUAL(log_get_destinations(NULL, 0), 0);
+
+    /* Slots should be available again from index zero */
+    int rc = log_add_stderr(LOG_WARN);
+    BOOST_CHECK_EQUAL(rc, 0);
+    BOOST_CHECK_EQUAL(log_get_destinations(NULL, 0), 1);
+}
+
+BOOST_AUTO_TEST_CASE(test_clear_destinations_idempotent_on_empty) {
+    reset_logger();
+
+    /* Calling clear on an already-empty list must not crash or corrupt state */
+    log_clear_destinations();
+    BOOST_CHECK_EQUAL(log_get_destinations(NULL, 0), 0);
+
+    log_clear_destinations();
+    BOOST_CHECK_EQUAL(log_get_destinations(NULL, 0), 0);
+}
+
+/* ------------------------------------------------------------------ */
 /* Callback destination                                               */
 /* ------------------------------------------------------------------ */
 
