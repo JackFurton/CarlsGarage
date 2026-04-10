@@ -6,6 +6,32 @@ CarlsGarage is a lightweight C/C++ utility library focused on practical, low-ove
 
 The `logger` module supports six severity levels (`TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR`, `FATAL`) and exposes a clean macro-based API so call-site code stays readable. You can register up to 420 custom log destinations (file pointers or function-pointer callbacks), set a minimum log level to filter noise, and suppress all output with quiet mode. You can also query the current quiet state at runtime with `log_get_quiet()`. A companion `throttled.h` header provides a `throttled(seconds, expr)` macro that rate-limits any expression — handy when you want to log inside a hot loop without drowning in output.
 
+### Level query
+
+```c
+/* Query the current minimum log level.
+ *
+ * Returns the log_level_t value most recently set with log_set_level().
+ * If log_set_level() has never been called, returns LOG_TRACE (0),
+ * which is the zero-initialised default. */
+int log_get_level(void);
+```
+
+**Example:**
+
+```c
+/* Read back the level that was just configured */
+log_set_level(LOG_WARN);
+int current = log_get_level();          /* current == LOG_WARN */
+printf("minimum level: %d\n", current);
+
+/* Temporarily raise the bar, do some work, then restore */
+int saved = log_get_level();
+log_set_level(LOG_ERROR);
+do_noisy_work();
+log_set_level(saved);
+```
+
 ### Destination query
 
 ```c
