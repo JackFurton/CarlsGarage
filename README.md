@@ -41,6 +41,39 @@ log_set_level(saved);
  * pointers (FILE * or callback udata) for the active destinations, in
  * registration order.  Slots beyond the active count are left untouched.
  *
+ * Returns the total number of active destinations regardless of
+ * out_size, so callers can pass NULL, 0 to get a pure count. */
+int log_get_destinations(void **out_destinations, int out_size);
+```
+
+**Example:**
+
+```c
+/* Count-only call — find out how many destinations are active right now */
+int n = log_get_destinations(NULL, 0);
+printf("active destinations: %d\n", n);
+
+/* Buffer-retrieval call — collect udata pointers into a fixed-size array.
+ * The size cap means we never overrun the buffer even if more destinations
+ * are registered than slots we have available. */
+log_add_fp(my_logfile, LOG_INFO);
+log_add_stderr(LOG_WARN);
+
+void *dest_buf[4];
+int count = log_get_destinations(dest_buf, 4); /* count == 2 */
+int slots = count < 4 ? count : 4;             /* whichever is smaller */
+for (int i = 0; i < slots; i++) {
+    printf("destination %d: %p\n", i, dest_buf[i]);
+}
+```
+
+```c
+/* Query the number of currently registered log destinations.
+ *
+ * If out_destinations is non-NULL, it is filled with up to out_size udata
+ * pointers (FILE * or callback udata) for the active destinations, in
+ * registration order.  Slots beyond the active count are left untouched.
+ *
  * Returns the total number of active destinations regardless of out_size,
  * so callers can pass NULL/0 for a cheap count-only check. */
 int log_get_destinations(void **out_destinations, int out_size);
