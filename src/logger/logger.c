@@ -117,6 +117,30 @@ int log_add_stderr(int level) {
     return log_add_destination(log_to_stream, stderr, level);
 }
 
+/**
+ * Returns the count of currently registered log destinations.
+ *
+ * If out_destinations is non-NULL, it will be filled with up to out_size udata
+ * pointers (FILE * or callback udata) for the active destinations, in
+ * registration order.  Slots beyond the active count are left untouched.
+ *
+ * @param out_destinations  Caller-supplied array to receive udata pointers, or NULL.
+ * @param out_size          Capacity of out_destinations (ignored when NULL).
+ * @return                  Total number of active destinations.
+ */
+int log_get_destinations(void **out_destinations, int out_size) {
+    int count = 0;
+    for (int i = 0; i < MAX_LOG_DESTINATIONS; i++) {
+        if (log_global_cfg.destinations[i].fn) {
+            if (out_destinations != NULL && count < out_size) {
+                out_destinations[count] = log_global_cfg.destinations[i].udata;
+            }
+            count++;
+        }
+    }
+    return count;
+}
+
 /* remove all registered destinations (useful for test teardown and runtime reconfiguration) */
 void log_remove_destinations(void) {
     for (int i = 0; i < MAX_LOG_DESTINATIONS; i++) {
