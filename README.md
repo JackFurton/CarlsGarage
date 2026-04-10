@@ -6,6 +6,34 @@ CarlsGarage is a lightweight C/C++ utility library focused on practical, low-ove
 
 The `logger` module supports six severity levels (`TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR`, `FATAL`) and exposes a clean macro-based API so call-site code stays readable. You can register up to 420 custom log destinations (file pointers or function-pointer callbacks), set a minimum log level to filter noise, and suppress all output with quiet mode. You can also query the current quiet state at runtime with `log_get_quiet()`. A companion `throttled.h` header provides a `throttled(seconds, expr)` macro that rate-limits any expression — handy when you want to log inside a hot loop without drowning in output.
 
+### Destination query
+
+```c
+/* Query the number of currently registered log destinations.
+ *
+ * If out_destinations is non-NULL, it is filled with up to out_size udata
+ * pointers (FILE * or callback udata) for the active destinations, in
+ * registration order.  Slots beyond the active count are left untouched.
+ *
+ * Returns the total number of active destinations regardless of out_size. */
+int log_get_destinations(void **out_destinations, int out_size);
+```
+
+**Example:**
+
+```c
+/* Quick count — pass NULL/0 to skip the output array */
+int n = log_get_destinations(NULL, 0);
+printf("%d destination(s) registered\n", n);
+
+/* Retrieve the actual udata pointers (typically FILE * values) */
+void *dests[16];
+int count = log_get_destinations(dests, 16);
+for (int i = 0; i < count; i++) {
+    printf("destination %d: %p\n", i, dests[i]);
+}
+```
+
 ## Building
 
 You'll need CMake (3.10+), a C/C++ compiler, and the Boost libraries (for the unit-test framework).
